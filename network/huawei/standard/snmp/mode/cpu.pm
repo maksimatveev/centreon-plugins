@@ -30,7 +30,7 @@ sub new {
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
     
-    $self->{version} = '0.1';
+    $self->{version} = '0.2';
     $options{options}->add_options(arguments =>
                                 {
                                   "warning:s"               => { name => 'warning', default => '' },
@@ -78,16 +78,16 @@ sub run {
     # $options{snmp} = snmp object
     $self->{snmp} = $options{snmp};
 
-    my $oid_agentCPUutilizationInAvg = '.1.3.6.1.4.1.2011.6.3.4.1.2.0';
-    my $oid_agentCPUutilizationIn1min = '.1.3.6.1.4.1.2011.6.3.4.1.3.0';
-    my $oid_agentCPUutilizationIn5min = '.1.3.6.1.4.1.2011.6.3.4.1.4.0';
+    my $oid_hwCpuDevDuty = '.1.3.6.1.4.1.2011.6.3.4.1.2.0';
+    my $oid_hwAvgDuty1min = '.1.3.6.1.4.1.2011.6.3.4.1.3.0';
+    my $oid_hwAvgDuty5min = '.1.3.6.1.4.1.2011.6.3.4.1.4.0';
    
-    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_agentCPUutilizationInAvg, $oid_agentCPUutilizationIn1min, $oid_agentCPUutilizationIn5min],
+    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_hwCpuDevDuty, $oid_hwAvgDuty1min, $oid_hwAvgDuty5min],
                                               nothing_quit => 1);
     
-    my $cpuavrg = $self->{result}->{$oid_agentCPUutilizationInAvg};
-    my $cpu1min = $self->{result}->{$oid_agentCPUutilizationIn1min};
-    my $cpu5min = $self->{result}->{$oid_agentCPUutilizationIn5min};
+    my $cpuavg = $self->{result}->{$oid_hwCpuDevDuty};
+    my $cpu1min = $self->{result}->{$oid_hwAvgDuty1min};
+    my $cpu5min = $self->{result}->{$oid_hwAvgDuty5min};
     
     my $exit1 = $self->{perfdata}->threshold_check(value => $cpuavg, 
                            threshold => [ { label => 'critavg', exit_litteral => 'critical' }, { label => 'warnavg', exit_litteral => 'warning' } ]);
@@ -127,7 +127,7 @@ __END__
 
 =head1 MODE
 
-Check cpu usage (genmgmt.mib).
+Check CPU usage (HUAWEI-CPU-MIB).
 
 =over 8
 
