@@ -82,7 +82,7 @@ __END__
 
 =head1 MODE
 
-Check system cpu usage (Raisecom).
+Check system СPU usage (Raisecom).
 
 =over 8
 
