@@ -30,7 +30,7 @@ sub new {
     bless $self, $class;
     # $options->{options} = options object
 
-    $self->{version} = '0.2';
+    $self->{version} = '0.3';
     %{$self->{modes}} = (
                          'cpu'              => 'network::raisecom::snmp::mode::cpu',
                          'interfaces'       => 'snmp_standard::mode::interfaces',
