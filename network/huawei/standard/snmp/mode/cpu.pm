@@ -79,8 +79,11 @@ sub run {
     $self->{snmp} = $options{snmp};
 
     my $oid_hwCpuDevDuty = '.1.3.6.1.4.1.2011.6.3.4.1.2.0';
+    #The value of this object identifies the average CPU occupancy of a board or an entity.
     my $oid_hwAvgDuty1min = '.1.3.6.1.4.1.2011.6.3.4.1.3.0';
+    #The value of this object identifies the average CPU occupancy of a board or an entity in the last one minute before you access the object.
     my $oid_hwAvgDuty5min = '.1.3.6.1.4.1.2011.6.3.4.1.4.0';
+    #The value of this object identifies the average CPU occupancy of a board or an entity in the last five minutes before you access the object.
    
     $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_hwCpuDevDuty, $oid_hwAvgDuty1min, $oid_hwAvgDuty5min],
                                               nothing_quit => 1);
