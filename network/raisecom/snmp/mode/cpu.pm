@@ -70,9 +70,9 @@ sub run {
     # $options{snmp} = snmp object
     $self->{snmp} = $options{snmp};
 
-    my $oid_raisecomCpuBusy1Per = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.2';
+    my $oid_raisecomCpuBusy1Per = '.1.3.6.1.4.1.8886.1.1.1.1.0';
     #CPU busy percentage in the last 1 second period,gathering data at the rate 200 times per second.
-    my $oid_raisecomCpuBusy60Per = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.3';
+    my $oid_raisecomCpuBusy60Per = '.1.3.6.1.4.1.8886.1.1.1.2.0';
     #CPU busy percentage in the last 60 second period,gathering data at the rate 200 times per second.
    
     $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_raisecomCpuBusy1Per, $oid_raisecomCpuBusy60Per],
