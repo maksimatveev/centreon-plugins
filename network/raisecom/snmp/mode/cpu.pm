@@ -59,15 +59,17 @@ sub run {
     # $options{snmp} = snmp object
     $self->{snmp} = $options{snmp};
 
-    my $oid_swCpuUsage = '.1.3.6.1.4.1.8886.1.1.1.2.0';
-    my $result = $self->{snmp}->get_leef(oids => [$oid_swCpuUsage], nothing_quit => 1);
+    my $oid_raisecomCpuBusy60Per = '.1.3.6.1.4.1.8886.1.1.1.2.0';
+    #CPU busy percentage in the last 60 second period,gathering data at the rate 200 times per second.
+    #Not the last 60 realtime seconds but the last 60 second period in the scheduler.
+    my $result = $self->{snmp}->get_leef(oids => [$oid_raisecomCpuBusy60Per], nothing_quit => 1);
     
-    my $exit = $self->{perfdata}->threshold_check(value => $result->{$oid_swCpuUsage}, 
+    my $exit = $self->{perfdata}->threshold_check(value => $result->{$oid_raisecomCpuBusy60Per}, 
                                                   threshold => [ { label => 'critical', exit_litteral => 'critical' }, { label => 'warning', exit_litteral => 'warning' } ]);
     $self->{output}->output_add(severity => $exit,
-                                short_msg => sprintf("CPU Usage: %.2f%%", $result->{$oid_swCpuUsage}));
+                                short_msg => sprintf("CPU Usage: %.2f%%", $result->{$oid_raisecomCpuBusy60Per}));
     $self->{output}->perfdata_add(label => "cpu", unit => '%',
-                                  value => $result->{$oid_swCpuUsage},
+                                  value => $result->{$oid_raisecomCpuBusy60Per},
                                   warning => $self->{perfdata}->get_perfdata_for_output(label => 'warning'),
                                   critical => $self->{perfdata}->get_perfdata_for_output(label => 'critical'),
                                   min => 0, max => 100);
