@@ -44,31 +44,23 @@ sub check_options {
     my ($self, %options) = @_;
     $self->SUPER::init(%options);
     
-    ($self->{warn5s}, $self->{warn1m}, $self->{warn5m}) = split /,/, $self->{option_results}->{warning};
-    ($self->{crit5s}, $self->{crit1m}, $self->{crit5m}) = split /,/, $self->{option_results}->{critical};
+    ($self->{warn1s}, $self->{warn1m}) = split /,/, $self->{option_results}->{warning};
+    ($self->{crit1s}, $self->{crit1m}) = split /,/, $self->{option_results}->{critical};
     
-    if (($self->{perfdata}->threshold_validate(label => 'warn5s', value => $self->{warn5s})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong warning (5sec) threshold '" . $self->{warn5s} . "'.");
+    if (($self->{perfdata}->threshold_validate(label => 'warn1s', value => $self->{warn1s})) == 0) {
+       $self->{output}->add_option_msg(short_msg => "Wrong warning (5sec) threshold '" . $self->{warn1s} . "'.");
        $self->{output}->option_exit();
     }
     if (($self->{perfdata}->threshold_validate(label => 'warn1m', value => $self->{warn1m})) == 0) {
        $self->{output}->add_option_msg(short_msg => "Wrong warning (1min) threshold '" . $self->{warn1m} . "'.");
        $self->{output}->option_exit();
     }
-    if (($self->{perfdata}->threshold_validate(label => 'warn5m', value => $self->{warn5m})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong warning (5min) threshold '" . $self->{warn5m} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'crit5s', value => $self->{crit5s})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong critical (crit5s) threshold '" . $self->{crit5s} . "'.");
+    if (($self->{perfdata}->threshold_validate(label => 'crit1s', value => $self->{crit1s})) == 0) {
+       $self->{output}->add_option_msg(short_msg => "Wrong critical (crit1s) threshold '" . $self->{crit1s} . "'.");
        $self->{output}->option_exit();
     }
     if (($self->{perfdata}->threshold_validate(label => 'crit1m', value => $self->{crit1m})) == 0) {
        $self->{output}->add_option_msg(short_msg => "Wrong critical (1min) threshold '" . $self->{crit1m} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'crit5m', value => $self->{crit5})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong critical (5min) threshold '" . $self->{crit5m} . "'.");
        $self->{output}->option_exit();
     }
 }
@@ -78,48 +70,37 @@ sub run {
     # $options{snmp} = snmp object
     $self->{snmp} = $options{snmp};
 
-    my $oid_raisecomCPUUtilizationIn5sec = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.2';
-    #CPU busy percentage in the last 5 sec.
-    my $oid_raisecomCPUUtilizationIn1min = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.3';
-    #CPU busy percentage in the last 1 min.
-    my $oid_raisecomCPUUtilizationIn10min = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.4';
-    #CPU busy percentage in the last 10 min.
+    my $oid_raisecomCpuBusy1Per = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.2';
+    #CPU busy percentage in the last 1 second period,gathering data at the rate 200 times per second.
+    my $oid_raisecomCpuBusy60Per = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2.3';
+    #CPU busy percentage in the last 60 second period,gathering data at the rate 200 times per second.
    
-    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_raisecomCPUUtilizationIn5sec, $oid_raisecomCPUUtilizationIn1min, $oid_raisecomCPUUtilizationIn10min],
+    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_raisecomCpuBusy1Per, $oid_raisecomCpuBusy60Per],
                                               nothing_quit => 1);
     
-    my $cpu5sec = $self->{result}->{$oid_raisecomCPUUtilizationIn5sec};
-    my $cpu1min = $self->{result}->{$oid_raisecomCPUUtilizationIn1min};
-    my $cpu5min = $self->{result}->{$oid_raisecomCPUUtilizationIn10min};
+    my $cpu1sec = $self->{result}->{$oid_raisecomCpuBusy1Per};
+    my $cpu1min = $self->{result}->{$oid_raisecomCpuBusy60Per};
     
-    my $exit1 = $self->{perfdata}->threshold_check(value => $cpu5sec, 
-                           threshold => [ { label => 'crit5s', exit_litteral => 'critical' }, { label => 'warn5s', exit_litteral => 'warning' } ]);
+    my $exit1 = $self->{perfdata}->threshold_check(value => $cpu1sec, 
+                           threshold => [ { label => 'crit1s', exit_litteral => 'critical' }, { label => 'warn1s', exit_litteral => 'warning' } ]);
     my $exit2 = $self->{perfdata}->threshold_check(value => $cpu1min, 
                            threshold => [ { label => 'crit1m', exit_litteral => 'critical' }, { label => 'warn1m', exit_litteral => 'warning' } ]);
-    my $exit3 = $self->{perfdata}->threshold_check(value => $cpu5min, 
-                           threshold => [ { label => 'crit5m', exit_litteral => 'critical' }, { label => 'warn5m', exit_litteral => 'warning' } ]);
-    my $exit = $self->{output}->get_most_critical(status => [ $exit1, $exit2, $exit3 ]);
+    my $exit = $self->{output}->get_most_critical(status => [ $exit1, $exit2 ]);
     
     $self->{output}->output_add(severity => $exit,
-                                short_msg => sprintf("CPU Usage: %.2f%% (5sec), %.2f%% (1min), %.2f%% (5min)",
-                                                    $cpu5sec, $cpu1min, $cpu5min));
+                                short_msg => sprintf("CPU Usage: %.2f%% (1sec), %.2f%% (1min)",
+                                                    $cpu1sec, $cpu1min));
     
-    $self->{output}->perfdata_add(label => "cpu_5s", unit => '%',
-                                  value => $cpu5sec,
-                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn5s'),
-                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit5s'),
+    $self->{output}->perfdata_add(label => "cpu_1s", unit => '%',
+                                  value => $cpu1sec,
+                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn1s'),
+                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit1s'),
                                   min => 0, max => 100);
     $self->{output}->perfdata_add(label => "cpu_1m", unit => '%',
                                   value => $cpu1min,
                                   warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn1m'),
                                   critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit1m'),
-                                  min => 0, max => 100);
-    $self->{output}->perfdata_add(label => "cpu_5m", unit => '%',
-                                  value => $cpu5min,
-                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn5m'),
-                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit5m'),
-                                  min => 0, max => 100);
-    
+                                  min => 0, max => 100); 
     $self->{output}->display();
     $self->{output}->exit();
 }
