@@ -29,7 +29,7 @@ sub set_counters {
     my ($self, %options) = @_;
     
     $self->{maps_counters_type} = [
-        { name => 'line', type => 1, cb_prefix_output => 'prefix_line_output', message_multiple => 'All input lines are ok', skipped_code => { -10 => 1 } }
+        { name => 'line', type => 1, cb_prefix_output => 'prefix_line_output', message_multiple => 'All input lines are OK', skipped_code => { -10 => 1 } }
     ];
     
     $self->{maps_counters}->{line} = [
