@@ -68,8 +68,8 @@ sub check {
         my $exit = $self->get_severity(section => 'temperature', value => $result->{ciscoEnvMonTemperatureState});
         if (!$self->{output}->is_status(value => $exit, compare => 'ok', litteral => 1)) {
             $self->{output}->output_add(severity => $exit,
-                                        short_msg => sprintf("Temperature '%s' status is %s", 
-                                                             $result->{ciscoEnvMonTemperatureStatusDescr}, $result->{ciscoEnvMonTemperatureState}));
+                                        short_msg => sprintf("Temperature '%s' status is %s [%s C]", 
+                                                             $result->{ciscoEnvMonTemperatureStatusDescr}, $result->{ciscoEnvMonTemperatureState}, $result->{ciscoEnvMonTemperatureStatusValue}));
         }
      
         next if (!defined($result->{ciscoEnvMonTemperatureStatusValue}));
