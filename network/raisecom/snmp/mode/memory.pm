@@ -64,7 +64,7 @@ sub run {
     my $result = $self->{snmp}->get_leef(oids => [$oid_raisecomAvailableMemory, $oid_raisecomTotalMemory], nothing_quit => 1);
     
     my $total_size = $result->{$oid_raisecomTotalMemory};
-    my $used = $result->{$oid_raisecomAvailableMemory} * $total_size / 100;
+    my $used = $result->{$oid_raisecomAvailableMemory};
     my $free = $total_size - $used;
     
     my $exit = $self->{perfdata}->threshold_check(value => $result->{$oid_raisecomAvailableMemory},
@@ -77,8 +77,8 @@ sub run {
     $self->{output}->output_add(severity => $exit,
                                 short_msg => sprintf("Memory Total: %s Used: %s (%.2f%%) Free: %s (%.2f%%)",
                                         $total_value . " " . $total_unit,
-                                        $used_value . " " . $used_unit, $result->{$oid_raisecomAvailableMemory},
-                                        $free_value . " " . $free_unit, (100 - $result->{$oid_raisecomAvailableMemory})));
+                                        $used_value . " " . $used_unit, $used / $total_size * 100,
+                                        $free_value . " " . $free_unit, 100 - $used / $total_size * 100));
 
     $self->{output}->perfdata_add(label => "used", unit => 'B',
                                   value => int($used),
