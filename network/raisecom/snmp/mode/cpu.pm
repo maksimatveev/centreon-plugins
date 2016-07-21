@@ -48,7 +48,7 @@ sub check_options {
     ($self->{crit1s}, $self->{crit1m}, $self->{crit10m}) = split /,/, $self->{option_results}->{critical};
     
     if (($self->{perfdata}->threshold_validate(label => 'warn1s', value => $self->{warn1s})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong warning (5sec) threshold '" . $self->{warn1s} . "'.");
+       $self->{output}->add_option_msg(short_msg => "Wrong warning (1sec) threshold '" . $self->{warn1s} . "'.");
        $self->{output}->option_exit();
     }
     if (($self->{perfdata}->threshold_validate(label => 'warn1m', value => $self->{warn1m})) == 0) {
