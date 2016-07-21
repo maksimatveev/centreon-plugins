@@ -30,7 +30,7 @@ sub new {
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
     
-    $self->{version} = '1.0';
+    $self->{version} = '1.1';
     $options{options}->add_options(arguments =>
                                 {
                                   "warning:s"               => { name => 'warning', default => '' },
@@ -55,12 +55,20 @@ sub check_options {
        $self->{output}->add_option_msg(short_msg => "Wrong warning (1min) threshold '" . $self->{warn1m} . "'.");
        $self->{output}->option_exit();
     }
+    if (($self->{perfdata}->threshold_validate(label => 'warn10m', value => $self->{warn10m})) == 0) {
+       $self->{output}->add_option_msg(short_msg => "Wrong warning (10min) threshold '" . $self->{warn10m} . "'.");
+       $self->{output}->option_exit();
+    }
     if (($self->{perfdata}->threshold_validate(label => 'crit1s', value => $self->{crit1s})) == 0) {
        $self->{output}->add_option_msg(short_msg => "Wrong critical (crit1s) threshold '" . $self->{crit1s} . "'.");
        $self->{output}->option_exit();
     }
     if (($self->{perfdata}->threshold_validate(label => 'crit1m', value => $self->{crit1m})) == 0) {
        $self->{output}->add_option_msg(short_msg => "Wrong critical (1min) threshold '" . $self->{crit1m} . "'.");
+       $self->{output}->option_exit();
+    }
+    if (($self->{perfdata}->threshold_validate(label => 'crit10m', value => $self->{crit10m})) == 0) {
+       $self->{output}->add_option_msg(short_msg => "Wrong critical (10min) threshold '" . $self->{crit10m} . "'.");
        $self->{output}->option_exit();
     }
 }
@@ -70,26 +78,31 @@ sub run {
     # $options{snmp} = snmp object
     $self->{snmp} = $options{snmp};
 
-    my $oid_raisecomCpuBusy1Per = '.1.3.6.1.4.1.8886.1.1.1.1.0';
-    #CPU busy percentage in the last 1 second period,gathering data at the rate 200 times per second.
-    my $oid_raisecomCpuBusy60Per = '.1.3.6.1.4.1.8886.1.1.1.2.0';
-    #CPU busy percentage in the last 60 second period,gathering data at the rate 200 times per second.
+    my $oid_raisecomCPUUtilization1sec = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3.1';
+    #CPU busy percentage in the last 1 second period.
+    my $oid_raisecomCPUUtilization1min = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3.3';
+    #CPU busy percentage in the last 1 minute period.
+    my $oid_raisecomCPUUtilization10min = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3.4';
+    #CPU busy percentage in the last 10 minute period.
    
-    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_raisecomCpuBusy1Per, $oid_raisecomCpuBusy60Per],
+    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_raisecomCPUUtilization1sec, $oid_raisecomCPUUtilization1min, $oid_raisecomCPUUtilization10min ],
                                               nothing_quit => 1);
     
-    my $cpu1sec = $self->{result}->{$oid_raisecomCpuBusy1Per};
-    my $cpu1min = $self->{result}->{$oid_raisecomCpuBusy60Per};
+    my $cpu1sec = $self->{result}->{$oid_raisecomCPUUtilization1sec};
+    my $cpu1min = $self->{result}->{$oid_raisecomCPUUtilization1min};
+    my $cpu10min = $self->{result}->{$oid_raisecomCPUUtilization10min};
     
     my $exit1 = $self->{perfdata}->threshold_check(value => $cpu1sec, 
                            threshold => [ { label => 'crit1s', exit_litteral => 'critical' }, { label => 'warn1s', exit_litteral => 'warning' } ]);
     my $exit2 = $self->{perfdata}->threshold_check(value => $cpu1min, 
                            threshold => [ { label => 'crit1m', exit_litteral => 'critical' }, { label => 'warn1m', exit_litteral => 'warning' } ]);
-    my $exit = $self->{output}->get_most_critical(status => [ $exit1, $exit2 ]);
+    my $exit3 = $self->{perfdata}->threshold_check(value => $cpu10min, 
+                           threshold => [ { label => 'crit10m', exit_litteral => 'critical' }, { label => 'warn10m', exit_litteral => 'warning' } ]);
+    my $exit = $self->{output}->get_most_critical(status => [ $exit1, $exit2, $exit3 ]);
     
     $self->{output}->output_add(severity => $exit,
-                                short_msg => sprintf("CPU Usage: %.2f%% (1sec), %.2f%% (1min)",
-                                                    $cpu1sec, $cpu1min));
+                                short_msg => sprintf("CPU Usage: %.2f%% (1sec), %.2f%% (1min), %.2f%% (10min)",
+                                                    $cpu1sec, $cpu1min, $cpu10min));
     
     $self->{output}->perfdata_add(label => "cpu_1s", unit => '%',
                                   value => $cpu1sec,
@@ -100,7 +113,12 @@ sub run {
                                   value => $cpu1min,
                                   warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn1m'),
                                   critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit1m'),
-                                  min => 0, max => 100); 
+                                  min => 0, max => 100);
+    $self->{output}->perfdata_add(label => "cpu_10m", unit => '%',
+                                  value => $cpu10min,
+                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn10m'),
+                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit10m'),
+                                  min => 0, max => 100);
     $self->{output}->display();
     $self->{output}->exit();
 }
