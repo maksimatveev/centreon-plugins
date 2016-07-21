@@ -60,7 +60,7 @@ sub check_options {
        $self->{output}->option_exit();
     }
     if (($self->{perfdata}->threshold_validate(label => 'crit1s', value => $self->{crit1s})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong critical (crit1s) threshold '" . $self->{crit1s} . "'.");
+       $self->{output}->add_option_msg(short_msg => "Wrong critical (1sec) threshold '" . $self->{crit1s} . "'.");
        $self->{output}->option_exit();
     }
     if (($self->{perfdata}->threshold_validate(label => 'crit1m', value => $self->{crit1m})) == 0) {
