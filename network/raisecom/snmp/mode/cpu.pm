@@ -44,8 +44,8 @@ sub check_options {
     my ($self, %options) = @_;
     $self->SUPER::init(%options);
     
-    ($self->{warn1s}, $self->{warn1m}) = split /,/, $self->{option_results}->{warning};
-    ($self->{crit1s}, $self->{crit1m}) = split /,/, $self->{option_results}->{critical};
+    ($self->{warn1s}, $self->{warn1m}, $self->{warn10m}) = split /,/, $self->{option_results}->{warning};
+    ($self->{crit1s}, $self->{crit1m}, $self->{crit10m}) = split /,/, $self->{option_results}->{critical};
     
     if (($self->{perfdata}->threshold_validate(label => 'warn1s', value => $self->{warn1s})) == 0) {
        $self->{output}->add_option_msg(short_msg => "Wrong warning (5sec) threshold '" . $self->{warn1s} . "'.");
