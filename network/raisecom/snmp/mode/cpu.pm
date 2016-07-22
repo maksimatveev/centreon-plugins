@@ -135,11 +135,11 @@ Check CPU usage (RAISECOM-SYSTEM-MIB).
 
 =item B<--warning>
 
-Threshold warning in percent (5s,1min,5min).
+Threshold warning in percent (1sec,1min,10min).
 
 =item B<--critical>
 
-Threshold critical in percent (5s,1min,5min).
+Threshold critical in percent (1sec,1min,10min).
 
 =back
 
