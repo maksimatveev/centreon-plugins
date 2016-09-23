@@ -18,11 +18,11 @@
 # limitations under the License.
 #
 
-package storage::hp::storeonce::restapi::plugin;
+package hardware::devices::gorgy::ntpserver::snmp::plugin;
 
 use strict;
 use warnings;
-use base qw(centreon::plugins::script_custom);
+use base qw(centreon::plugins::script_snmp);
 
 sub new {
     my ($class, %options) = @_;
@@ -31,12 +31,11 @@ sub new {
 
     $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'cluster-usage'    => 'storage::hp::storeonce::restapi::mode::clusterusage',
-                         'fcs-usage'        => 'storage::hp::storeonce::restapi::mode::fcsusage',
-                         'serviceset-usage' => 'storage::hp::storeonce::restapi::mode::servicesetusage',
+                         'global-status'    => 'hardware::devices::gorgy::ntpserver::snmp::mode::globalstatus',
+                         'interfaces'       => 'snmp_standard::mode::interfaces',
+                         'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
                          );
 
-    $self->{custom_modes}{api} = 'storage::hp::storeonce::restapi::custom::api';
     return $self;
 }
 
@@ -46,4 +45,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Hp Storeonce through HTTP/REST API.
+Check Gorgy ntp servers in SNMP.
+
+=cut

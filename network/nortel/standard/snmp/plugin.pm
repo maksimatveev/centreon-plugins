@@ -18,11 +18,11 @@
 # limitations under the License.
 #
 
-package storage::hp::storeonce::restapi::plugin;
+package network::nortel::standard::snmp::plugin;
 
 use strict;
 use warnings;
-use base qw(centreon::plugins::script_custom);
+use base qw(centreon::plugins::script_snmp);
 
 sub new {
     my ($class, %options) = @_;
@@ -31,12 +31,13 @@ sub new {
 
     $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'cluster-usage'    => 'storage::hp::storeonce::restapi::mode::clusterusage',
-                         'fcs-usage'        => 'storage::hp::storeonce::restapi::mode::fcsusage',
-                         'serviceset-usage' => 'storage::hp::storeonce::restapi::mode::servicesetusage',
+                         'cpu'              => 'network::nortel::standard::snmp::mode::cpu',
+                         'hardware'         => 'network::nortel::standard::snmp::mode::hardware',
+                         'interfaces'       => 'snmp_standard::mode::interfaces',
+                         'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
+                         'memory'           => 'network::nortel::standard::snmp::mode::memory',
                          );
 
-    $self->{custom_modes}{api} = 'storage::hp::storeonce::restapi::custom::api';
     return $self;
 }
 
@@ -46,4 +47,7 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Hp Storeonce through HTTP/REST API.
+Check Nortel switch/routers in SNMP.
+Can be used for avaya equipments also.
+
+=cut
