@@ -18,20 +18,20 @@
 # limitations under the License.
 #
 
-package apps::msmq::local::plugin;
+package hardware::sensors::netbotz::snmp::plugin;
 
 use strict;
 use warnings;
-use base qw(centreon::plugins::script_simple);
+use base qw(centreon::plugins::script_snmp);
 
 sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
 
-    $self->{version} = '0.1';
+    $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'list-queues'    => 'apps::msmq::local::mode::listqueues',
+                         'sensors' => 'hardware::sensors::netbotz::snmp::mode::sensors',
                          );
 
     return $self;
@@ -43,7 +43,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Windows Microsoft Message Queuing locally.
-!!! Don't use it. Work on it (try to understand MSMQ :) !!!
+Check NetBotz sensors in SNMP.
 
 =cut
