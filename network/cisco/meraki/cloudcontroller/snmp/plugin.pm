@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-package storage::synology::snmp::plugin;
+package network::cisco::meraki::cloudcontroller::snmp::plugin;
 
 use strict;
 use warnings;
@@ -29,16 +29,9 @@ sub new {
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
 
-    $self->{version} = '1.1';
+    $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'components'           => 'storage::synology::snmp::mode::hardware',
-                         'temperature'          => 'storage::synology::snmp::mode::temperature',
-                         'ups'                  => 'storage::synology::snmp::mode::ups',
-                         'cpu'                  => 'snmp_standard::mode::cpu',
-                         'interfaces'           => 'snmp_standard::mode::interfaces',
-                         'memory'               => 'snmp_standard::mode::memory',
-                         'load'                 => 'snmp_standard::mode::loadaverage',
-                         'storage'              => 'snmp_standard::mode::storage',
+                         'device-usage'     => 'network::cisco::meraki::cloudcontroller::snmp::mode::deviceusage',
                          );
 
     return $self;
@@ -50,6 +43,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Synology devices in SNMP.
+Check Cisco Meraki cloud controller in SNMP.
 
 =cut
