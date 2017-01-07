@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-package storage::qnap::snmp::mode::hardware;
+package network::sophos::es::snmp::mode::health;
 
 use base qw(centreon::plugins::templates::hardware);
 
@@ -28,29 +28,22 @@ use warnings;
 sub set_system {
     my ($self, %options) = @_;
     
-    $self->{regexp_threshold_overload_check_section_option} = '^(temperature|disk|fan)$';
-    $self->{regexp_threshold_numeric_check_section_option} = '^(temperature|disk|fan)$';
+    $self->{regexp_threshold_overload_check_section_option} = '^(system|component)$';
     
     $self->{cb_hook2} = 'snmp_execute';
     
     $self->{thresholds} = {
-        disk => [
-            ['noDisk', 'OK'],
-            ['ready', 'OK'],
-            ['invalid', 'CRITICAL'],
-            ['rwError', 'CRITICAL'],
-            ['unknown', 'UNKNOWN'],
-        ],
-        smartdisk => [
-            ['GOOD', 'OK'],
-            ['NORMAL', 'WARNING'],
-            ['--', 'OK'],
-            ['.*', 'CRITICAL'],
+        default => [            
+            ['unknown', 'OK'],
+            ['disabled', 'OK'],
+            ['ok', 'OK'],
+            ['warn', 'WARNING'],
+            ['error', 'CRITICAL'],
         ],
     };
     
-    $self->{components_path} = 'storage::qnap::snmp::mode::components';
-    $self->{components_module} = ['temperature', 'disk', 'fan'];
+    $self->{components_path} = 'network::sophos::es::snmp::mode::components';
+    $self->{components_module} = ['component', 'system'];
 }
 
 sub snmp_execute {
@@ -62,7 +55,7 @@ sub snmp_execute {
 
 sub new {
     my ($class, %options) = @_;
-    my $self = $class->SUPER::new(package => __PACKAGE__, %options);
+    my $self = $class->SUPER::new(package => __PACKAGE__, %options, no_absent => 1, no_performance => 1);
     bless $self, $class;
     
     $self->{version} = '1.0';
@@ -79,24 +72,19 @@ __END__
 
 =head1 MODE
 
-Check hardware (NAS.mib) (Fans, Temperatures, Disks).
+Check health status.
 
 =over 8
 
 =item B<--component>
 
 Which component to check (Default: '.*').
-Can be: 'fan', 'disk', 'temperature'.
+Can be: 'component', 'system'.
 
 =item B<--filter>
 
-Exclude some parts (comma seperated list) (Example: --filter=disk)
-Can also exclude specific instance: --filter=disk,1
-
-=item B<--absent-problem>
-
-Return an error if an entity is not 'present' (default is skipping) (comma seperated list)
-Can be specific or global: --absent-problem=disk
+Exclude some parts (comma seperated list) 
+Can also exclude specific instance: --filter=system,MailDiskUsage
 
 =item B<--no-component>
 
@@ -105,19 +93,9 @@ If total (with skipped) is 0. (Default: 'critical' returns).
 
 =item B<--threshold-overload>
 
-Set to overload default threshold values (syntax: section,status,regexp)
+Set to overload default threshold values (syntax: section,[instance,]status,regexp)
 It used before default thresholds (order stays).
-Example: --threshold-overload='disk,CRITICAL,^(?!(ready)$)'
-
-=item B<--warning>
-
-Set warning threshold for temperatures (syntax: type,regexp,threshold)
-Example: --warning='temperature,cpu,30' --warning='fan,.*,1500'
-
-=item B<--critical>
-
-Set critical threshold for temperatures (syntax: type,regexp,threshold)
-Example: --critical='temperature,system,40' --critical='disk,.*,40'
+Example: --threshold-overload='component,UNKNOWN,unknown'
 
 =back
 

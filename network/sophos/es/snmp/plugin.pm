@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-package network::cyberoam::snmp::plugin;
+package network::sophos::es::snmp::plugin;
 
 use strict;
 use warnings;
@@ -31,13 +31,8 @@ sub new {
 
     $self->{version} = '0.1';
     %{$self->{modes}} = (
-                         'cpu'              => 'network::cyberoam::snmp::mode::cpu',
-                         'interfaces'       => 'snmp_standard::mode::interfaces',
-                         'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
-                         'memory'           => 'network::cyberoam::snmp::mode::memory',
-                         'requests'         => 'network::cyberoam::snmp::mode::requests',
-                         'services'         => 'network::cyberoam::snmp::mode::services',
-                         'storage'          => 'network::cyberoam::snmp::mode::storage',
+                         'health'   => 'network::sophos::es::snmp::mode::health',
+                         'message'  => 'network::sophos::es::snmp::mode::message',
                          );
 
     return $self;
@@ -49,6 +44,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Cyberoam equipments in SNMP.
+Check Sophos Email Security appliance (also virtual) in SNMP.
 
 =cut

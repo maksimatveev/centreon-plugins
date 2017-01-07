@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-package network::cyberoam::snmp::plugin;
+package network::efficientip::snmp::plugin;
 
 use strict;
 use warnings;
@@ -29,15 +29,10 @@ sub new {
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
 
-    $self->{version} = '0.1';
+    $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'cpu'              => 'network::cyberoam::snmp::mode::cpu',
-                         'interfaces'       => 'snmp_standard::mode::interfaces',
-                         'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
-                         'memory'           => 'network::cyberoam::snmp::mode::memory',
-                         'requests'         => 'network::cyberoam::snmp::mode::requests',
-                         'services'         => 'network::cyberoam::snmp::mode::services',
-                         'storage'          => 'network::cyberoam::snmp::mode::storage',
+                         'dhcp-usage'   => 'network::efficientip::snmp::mode::dhcpusage',
+                         'dns-usage'    => 'network::efficientip::snmp::mode::dnsusage',
                          );
 
     return $self;
@@ -49,6 +44,7 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Cyberoam equipments in SNMP.
+Check Efficient IP equipment in SNMP.
+Please use plugin SNMP Linux for system checks ('cpu', 'memory', 'traffic',...).
 
 =cut
