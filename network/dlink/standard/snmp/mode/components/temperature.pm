@@ -50,15 +50,15 @@ sub check {
         next if ($self->check_filter(section => 'temperature', instance => $instance));
         $self->{components}->{temperature}->{total}++;
 
-        $self->{output}->output_add(long_msg => sprintf("Temperature '%s' is %dC.", 
+        $self->{output}->output_add(long_msg => sprintf("Temperature '%s' is %d °C.", 
                                     $instance, $result->{swTemperatureCurrent}));
         
         my ($exit, $warn, $crit, $checked) = $self->get_severity_numeric(section => 'temperature', instance => $instance, value => $result->{swTemperatureCurrent});
         if (!$self->{output}->is_status(value => $exit, compare => 'ok', litteral => 1)) {
             $self->{output}->output_add(severity => $exit,
-                                        short_msg => sprintf("Temperature '%s' is %s degree centigrade", $instance, $result->{swTemperatureCurrent}));
+                                        short_msg => sprintf("Temperature '%s' is %s °C", $instance, $result->{swTemperatureCurrent}));
         }
-        $self->{output}->perfdata_add(label => "temp_" . $instance, unit => 'C',
+        $self->{output}->perfdata_add(label => "temp_" . $instance, unit => '°C',
                                       value => $result->{swTemperatureCurrent},
                                       warning => $warn,
                                       critical => $crit);
