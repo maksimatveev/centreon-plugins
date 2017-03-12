@@ -60,31 +60,31 @@ sub run {
     $self->{snmp} = $options{snmp};
 
     my $oid_raisecomAvailableMemory = '.1.3.6.1.4.1.8886.1.1.3.2.0';
-    my $oid_raisecomTotalMemory = '.1.3.6.1.4.1.8886.1.1.3.1.0'; # in MB
+    my $oid_raisecomTotalMemory = '.1.3.6.1.4.1.8886.1.1.3.1.0';
     my $result = $self->{snmp}->get_leef(oids => [$oid_raisecomAvailableMemory, $oid_raisecomTotalMemory], nothing_quit => 1);
     
-    my $total_size = $result->{$oid_raisecomTotalMemory};
-    my $used = $result->{$oid_raisecomAvailableMemory};
-    my $free = $total_size - $used;
+    my $total = $result->{$oid_raisecomTotalMemory};
+    my $free = $result->{$oid_raisecomAvailableMemory};
+    my $used = $total - $free;
     
     my $exit = $self->{perfdata}->threshold_check(value => $result->{$oid_raisecomAvailableMemory},
                                                   threshold => [ { label => 'critical', exit_litteral => 'critical' }, { label => 'warning', exit_litteral => 'warning' } ]);
     
-    my ($total_value, $total_unit) = $self->{perfdata}->change_bytes(value => $total_size);
+    my ($total_value, $total_unit) = $self->{perfdata}->change_bytes(value => $total);
     my ($used_value, $used_unit) = $self->{perfdata}->change_bytes(value => $used);
     my ($free_value, $free_unit) = $self->{perfdata}->change_bytes(value => $free);
 
     $self->{output}->output_add(severity => $exit,
                                 short_msg => sprintf("Memory Total: %s Used: %s (%.2f%%) Free: %s (%.2f%%)",
                                         $total_value . " " . $total_unit,
-                                        $used_value . " " . $used_unit, $used / $total_size * 100,
-                                        $free_value . " " . $free_unit, 100 - $used / $total_size * 100));
+                                        $used_value . " " . $used_unit, $used / $total * 100,
+                                        $free_value . " " . $free_unit, 100 - $used / $total * 100));
 
     $self->{output}->perfdata_add(label => "used", unit => 'B',
                                   value => int($used),
-                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warning', total => $total_size, cast_int => 1),
-                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'critical', total => $total_size, cast_int => 1),
-                                  min => 0, max => $total_size);
+                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warning', total => $total, cast_int => 1),
+                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'critical', total => $total, cast_int => 1),
+                                  min => 0, max => $total);
 
     $self->{output}->display();
     $self->{output}->exit();
