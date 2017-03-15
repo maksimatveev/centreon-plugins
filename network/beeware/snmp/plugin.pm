@@ -18,30 +18,23 @@
 # limitations under the License.
 #
 
-package apps::tomcat::jmx::plugin;
+package network::beeware::snmp::plugin;
 
 use strict;
 use warnings;
-use base qw(centreon::plugins::script_custom);
+use base qw(centreon::plugins::script_snmp);
 
 sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
 
-    $self->{version} = '0.1';
+    $self->{version} = '1.0';
     %{$self->{modes}} = (
-                          'class-count'      => 'centreon::common::jvm::mode::classcount',
-                          'cpu-load'         => 'centreon::common::jvm::mode::cpuload',
-                          'fd-usage'         => 'centreon::common::jvm::mode::fdusage',
-                          'gc-usage'         => 'centreon::common::jvm::mode::gcusage',
-                          'load-average'     => 'centreon::common::jvm::mode::loadaverage',
-                          'memory'           => 'centreon::common::jvm::mode::memory',
-                          'memory-detailed'  => 'centreon::common::jvm::mode::memorydetailed',
-                          'threads'          => 'centreon::common::jvm::mode::threads',
+                         'list-reverse-proxy'   => 'network::beeware::snmp::mode::listreverseproxy',
+                         'reverse-proxy-usage'  => 'network::beeware::snmp::mode::reverseproxyusage',
                          );
 
-    $self->{custom_modes}{jolokia} = 'centreon::common::protocols::jmx::custom::jolokia';
     return $self;
 }
 
@@ -51,6 +44,7 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Tomcat in JMX. Need Jolokia agent.
+Check Beeware equipments in SNMP.
+Please use plugin SNMP Linux for system checks ('cpu', 'memory', 'traffic',...).
 
 =cut
