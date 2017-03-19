@@ -18,30 +18,30 @@
 # limitations under the License.
 #
 
-package apps::tomcat::jmx::plugin;
+package network::oracle::infiniband::snmp::plugin;
 
 use strict;
 use warnings;
-use base qw(centreon::plugins::script_custom);
+use base qw(centreon::plugins::script_snmp);
 
 sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
 
-    $self->{version} = '0.1';
+    $self->{version} = '1.0';
     %{$self->{modes}} = (
-                          'class-count'      => 'centreon::common::jvm::mode::classcount',
-                          'cpu-load'         => 'centreon::common::jvm::mode::cpuload',
-                          'fd-usage'         => 'centreon::common::jvm::mode::fdusage',
-                          'gc-usage'         => 'centreon::common::jvm::mode::gcusage',
-                          'load-average'     => 'centreon::common::jvm::mode::loadaverage',
-                          'memory'           => 'centreon::common::jvm::mode::memory',
-                          'memory-detailed'  => 'centreon::common::jvm::mode::memorydetailed',
-                          'threads'          => 'centreon::common::jvm::mode::threads',
+                         'cpu-detailed'     => 'snmp_standard::mode::cpudetailed',
+                         'hardware'         => 'centreon::common::sun::snmp::mode::hardware',
+                         'load'             => 'snmp_standard::mode::loadaverage',
+                         'infiniband-usage' => 'network::oracle::infiniband::snmp::mode::infinibandusage',
+                         'interfaces'       => 'snmp_standard::mode::interfaces',
+                         'list-infinibands' => 'network::oracle::infiniband::snmp::mode::listinfinibands',
+                         'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
+                         'memory'           => 'snmp_standard::mode::memory',
+                         'swap'             => 'snmp_standard::mode::swap',
                          );
 
-    $self->{custom_modes}{jolokia} = 'centreon::common::protocols::jmx::custom::jolokia';
     return $self;
 }
 
@@ -51,6 +51,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Tomcat in JMX. Need Jolokia agent.
+Check Oracle Infiniband Switches in SNMP.
 
 =cut
