@@ -36,6 +36,14 @@ sub set_counters {
     ];
     
     $self->{maps_counters}->{sap} = [
+        { label => 'status', threshold => 0, set => {
+                key_values => [ { name => 'status' }, { name => 'admin' }, { name => 'display' } ],
+                closure_custom_calc => $self->can('custom_status_calc'),
+                closure_custom_output => $self->can('custom_status_output'),
+                closure_custom_perfdata => sub { return 0; },
+                closure_custom_threshold_check => $self->can('custom_status_threshold'),
+            }
+        },
         { label => 'in-traffic', set => {
                 key_values => [ { name => 'in', diff => 1 }, { name => 'display' } ],
                 per_second => 1,
@@ -56,14 +64,62 @@ sub set_counters {
         },
         { label => 'in-drop-packets', set => {
                 key_values => [ { name => 'in_dropped_packets', diff => 1 }, { name => 'display' } ],
+                closure_custom_calc => $self->can('custom_qos_drop_calc'),
                 output_template => 'In Dropped Packets : %s',
                 perfdatas => [
                     { label => 'in_drop_packets', value => 'in_dropped_packets_absolute', template => '%s',
-                      min => 0, label_extra_instance => 1, instance_use => 'display_absolute' },
+                      min => 0, label_extra_instance => 1, instance_use => 'display' },
                 ],
             }
         },
     ];
+}
+
+sub custom_status_threshold {
+    my ($self, %options) = @_;
+    my $status = 'ok';
+    my $message;
+
+    eval {
+        local $SIG{__WARN__} = sub { $message = $_[0]; };
+        local $SIG{__DIE__} = sub { $message = $_[0]; };
+
+        my $label = $self->{label};
+        $label =~ s/-/_/g;
+        if (defined($instance_mode->{option_results}->{'critical_' . $label}) && $instance_mode->{option_results}->{'critical_' . $label} ne '' &&
+            eval "$instance_mode->{option_results}->{'critical_' . $label}") {
+            $status = 'critical';
+        } elsif (defined($instance_mode->{option_results}->{'warning_' . $label}) && $instance_mode->{option_results}->{'warning_' . $label} ne '' &&
+                 eval "$instance_mode->{option_results}->{'warning_' . $label}") {
+            $status = 'warning';
+        }
+
+        $instance_mode->{last_status} = 0;
+        if ($self->{result_values}->{admin} eq 'up') {
+            $instance_mode->{last_status} = 1;
+        }
+    };
+    if (defined($message)) {
+        $self->{output}->output_add(long_msg => 'filter status issue: ' . $message);
+    }
+
+    return $status;
+}
+
+sub custom_status_output {
+    my ($self, %options) = @_;
+    my $msg = 'Status : ' . $self->{result_values}->{status} . ' (admin: ' . $self->{result_values}->{admin} . ')';
+
+    return $msg;
+}
+
+sub custom_status_calc {
+    my ($self, %options) = @_;
+
+    $self->{result_values}->{admin} = $options{new_datas}->{$self->{instance} . '_admin'};
+    $self->{result_values}->{status} = $options{new_datas}->{$self->{instance} . '_status'};
+    $self->{result_values}->{display} = $options{new_datas}->{$self->{instance} . '_display'};
+    return 0;
 }
 
 sub custom_qos_perfdata {
@@ -121,6 +177,7 @@ sub custom_qos_output {
 sub custom_qos_calc {
     my ($self, %options) = @_;
     
+    return -10 if (defined($instance_mode->{last_status}) && $instance_mode->{last_status} == 0);
     $self->{result_values}->{label} = $options{extra_options}->{label_ref};
     $self->{result_values}->{display} = $options{new_datas}->{$self->{instance} . '_display'};
     $self->{result_values}->{traffic} = ($options{new_datas}->{$self->{instance} . '_' . $self->{result_values}->{label}} - $options{old_datas}->{$self->{instance} . '_' . $self->{result_values}->{label}}) / $options{delta_time};
@@ -128,6 +185,15 @@ sub custom_qos_calc {
         $self->{result_values}->{traffic_prct} = $self->{result_values}->{traffic} * 100 / ($instance_mode->{option_results}->{'speed_' . $self->{result_values}->{label}} * 1000 * 1000);
         $self->{result_values}->{speed} = $instance_mode->{option_results}->{'speed_' . $self->{result_values}->{label}} * 1000 * 1000;
     }
+    return 0;
+}
+
+sub custom_qos_drop_calc {
+    my ($self, %options) = @_;
+    
+    return -10 if (defined($instance_mode->{last_status}) && $instance_mode->{last_status} == 0);
+    $self->{result_values}->{display} = $options{new_datas}->{$self->{instance} . '_display'};
+    $self->{result_values}->{in_dropped_packets_absolute} = $options{new_datas}->{$self->{instance} . '_in_dropped_packets'} - $options{old_datas}->{$self->{instance} . '_in_dropped_packets'};
     return 0;
 }
 
@@ -144,6 +210,8 @@ sub new {
                                   "speed-in:s"          => { name => 'speed_in' },
                                   "speed-out:s"         => { name => 'speed_out' },
                                   "units-traffic:s"     => { name => 'units_traffic', default => '%' },
+                                  "warning-status:s"    => { name => 'warning_status', default => '' },
+                                  "critical-status:s"   => { name => 'critical_status', default => '%{admin} =~ /up/i and %{status} !~ /up/i' },
                                 });
     
     return $self;
@@ -154,6 +222,17 @@ sub check_options {
     $self->SUPER::check_options(%options);
     
     $instance_mode = $self;
+    $self->change_macros();
+}
+
+sub change_macros {
+    my ($self, %options) = @_;
+    
+    foreach (('warning_status', 'critical_status')) {
+        if (defined($self->{option_results}->{$_})) {
+            $self->{option_results}->{$_} =~ s/%\{(.*?)\}/\$self->{result_values}->{$1}/g;
+        }
+    }
 }
 
 sub prefix_sap_output {
@@ -170,11 +249,22 @@ sub get_display_name {
     return $display_name;
 }
 
+my %map_admin = (1 => 'up', 2 => 'down');
+my %map_oper = (1 => 'up', 2 => 'down', 3 => 'ingressQosMismatch',
+    4 => 'egressQosMismatch', 5 => 'portMtuTooSmall', 6 => 'svcAdminDown',
+    7 => 'iesIfAdminDown'
+);
+
+my $mapping = {
+    tnSapAdminStatus    => { oid => '.1.3.6.1.4.1.7483.6.1.2.4.3.2.1.6', map => \%map_admin },
+    tnSapOperStatus     => { oid => '.1.3.6.1.4.1.7483.6.1.2.4.3.2.1.7', map => \%map_oper },
+    tnSapBaseStatsIngressForwardedOctets    => { oid => '.1.3.6.1.4.1.7483.7.2.2.2.8.1.1.1.4' },
+    tnSapBaseStatsEgressForwardedOctets     => { oid => '.1.3.6.1.4.1.7483.7.2.2.2.8.1.1.1.6' },
+    tnSapBaseStatsIngressDroppedPackets     => { oid => '.1.3.6.1.4.1.7483.7.2.2.2.8.1.1.1.9' },
+};
+
 my $oid_tnSapDescription = '.1.3.6.1.4.1.7483.6.1.2.4.3.2.1.5';
 my $oid_tnSvcName = '.1.3.6.1.4.1.7483.6.1.2.4.2.2.1.28';
-my $oid_tnSapBaseStatsIngressForwardedOctets = '.1.3.6.1.4.1.7483.7.2.2.2.8.1.1.1.4';
-my $oid_tnSapBaseStatsEgressForwardedOctets = '.1.3.6.1.4.1.7483.7.2.2.2.8.1.1.1.6';
-my $oid_tnSapBaseStatsIngressDroppedPackets = '.1.3.6.1.4.1.7483.7.2.2.2.8.1.1.1.9';
 
 sub manage_selection {
     my ($self, %options) = @_;
@@ -196,6 +286,7 @@ sub manage_selection {
         next if ($oid !~ /^$oid_tnSapDescription\.(.*?)\.(.*?)\.(.*?)\.(.*?)$/);
         my ($SysSwitchId, $SvcId, $SapPortId, $SapEncapValue) = ($1, $2, $3, $4);
         my $instance = $SysSwitchId . '.' . $SvcId . '.' . $SapPortId . '.' . $SapEncapValue;
+        
         my $SapDescription = $snmp_result->{$oid_tnSapDescription}->{$oid};
         my $SvcName = defined($snmp_result->{$oid_tnSvcName}->{$oid_tnSvcName . '.' . $SysSwitchId . '.' . $SvcId}) ?
            $snmp_result->{$oid_tnSvcName}->{$oid_tnSvcName . '.' . $SysSwitchId . '.' . $SvcId} : '';
@@ -207,18 +298,21 @@ sub manage_selection {
             next;
         }
         
-        $self->{sap}->{$SysSwitchId . '.' . $SvcId . '.' . $SapPortId . '.' . $SapEncapValue} = { 
-            display => $name, 
-        };
+        $self->{sap}->{$instance} = { display => $name };
     }
     
-    $options{snmp}->load(oids => [$oid_tnSapBaseStatsIngressForwardedOctets, $oid_tnSapBaseStatsEgressForwardedOctets, $oid_tnSapBaseStatsIngressDroppedPackets], 
+    $options{snmp}->load(oids => [$mapping->{tnSapBaseStatsIngressForwardedOctets}->{oid}, 
+        $mapping->{tnSapBaseStatsEgressForwardedOctets}->{oid}, $mapping->{tnSapBaseStatsIngressDroppedPackets}->{oid},
+        $mapping->{tnSapAdminStatus}->{oid}, $mapping->{tnSapOperStatus}->{oid}], 
         instances => [keys %{$self->{sap}}], instance_regexp => '(\d+\.\d+\.\d+\.\d+)$');
     $snmp_result = $options{snmp}->get_leef(nothing_quit => 1);
     foreach (keys %{$self->{sap}}) {
-        $self->{sap}->{$_}->{in} = $snmp_result->{$oid_tnSapBaseStatsIngressForwardedOctets . '.' . $_} * 8;
-        $self->{sap}->{$_}->{out} = $snmp_result->{$oid_tnSapBaseStatsEgressForwardedOctets . '.' . $_} * 8;
-        $self->{sap}->{$_}->{in_dropped_packets} = $snmp_result->{$oid_tnSapBaseStatsIngressDroppedPackets . '.' . $_};
+        my $result = $options{snmp}->map_instance(mapping => $mapping, results => $snmp_result, instance => $_);        
+        $self->{sap}->{$_}->{in} = $result->{tnSapBaseStatsIngressForwardedOctets} * 8;
+        $self->{sap}->{$_}->{out} = $result->{tnSapBaseStatsEgressForwardedOctets} * 8;
+        $self->{sap}->{$_}->{in_dropped_packets} = $result->{tnSapBaseStatsIngressDroppedPackets};
+        $self->{sap}->{$_}->{status} = $result->{tnSapAdminStatus};
+        $self->{sap}->{$_}->{admin} = $result->{tnSapOperStatus};
     }
 
     if (scalar(keys %{$self->{sap}}) <= 0) {
@@ -261,6 +355,16 @@ Set interface speed for outgoing traffic (in Mb).
 =item B<--units-traffic>
 
 Units of thresholds for the traffic (Default: '%') ('%', 'b/s').
+
+=item B<--warning-status>
+
+Set warning threshold for ib status.
+Can used special variables like: %{admin}, %{status}, %{display}
+
+=item B<--critical-status>
+
+Set critical threshold for ib status (Default: '%{admin} =~ /up/i and %{status} !~ /up/i').
+Can used special variables like: %{admin}, %{status}, %{display}
 
 =item B<--warning-*>
 
