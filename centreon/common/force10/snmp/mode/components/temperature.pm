@@ -63,9 +63,9 @@ sub check {
             my ($exit, $warn, $crit, $checked) = $self->get_severity_numeric(section => 'temperature', instance => $instance, value => $result->{Temp});
             if (!$self->{output}->is_status(value => $exit, compare => 'ok', litteral => 1)) {
                 $self->{output}->output_add(severity => $exit,
-                                            short_msg => sprintf("Temperature '%s' is %s C", $instance, $result->{Temp}));
+                                            short_msg => sprintf("Temperature '%s' is %s °C", $instance, $result->{Temp}));
             }
-            $self->{output}->perfdata_add(label => 'temp_' . $instance, unit => 'C',
+            $self->{output}->perfdata_add(label => 'temp_' . $instance, unit => '°C',
                                           value => $result->{Temp},
                                           warning => $warn,
                                           critical => $crit);

@@ -62,13 +62,13 @@ sub check {
         next if ($self->check_filter(section => 'temperature', instance => $instance));
         $self->{components}->{temperature}->{total}++;
 
-        $self->{output}->output_add(long_msg => sprintf("Temperature '%s' status is %s [instance: %s] [value: %s C]", 
+        $self->{output}->output_add(long_msg => sprintf("Temperature '%s' status is %s [instance: %s] [value: %s °C]", 
                                     $result->{ciscoEnvMonTemperatureStatusDescr}, $result->{ciscoEnvMonTemperatureState},
                                     $instance, defined($result->{ciscoEnvMonTemperatureStatusValue}) ? $result->{ciscoEnvMonTemperatureStatusValue} : '-'));
         my $exit = $self->get_severity(section => 'temperature', value => $result->{ciscoEnvMonTemperatureState});
         if (!$self->{output}->is_status(value => $exit, compare => 'ok', litteral => 1)) {
             $self->{output}->output_add(severity => $exit,
-                                        short_msg => sprintf("Temperature '%s' status is %s [%s C]", 
+                                        short_msg => sprintf("Temperature '%s' status is %s [%s °C]", 
                                                              $result->{ciscoEnvMonTemperatureStatusDescr}, $result->{ciscoEnvMonTemperatureState}, $result->{ciscoEnvMonTemperatureStatusValue}));
         }
      
@@ -85,9 +85,9 @@ sub check {
         }
         if (!$self->{output}->is_status(value => $exit2, compare => 'ok', litteral => 1)) {
             $self->{output}->output_add(severity => $exit2,
-                                        short_msg => sprintf("Temperature '%s' is %s degree centigrade", $result->{ciscoEnvMonTemperatureStatusDescr}, $result->{ciscoEnvMonTemperatureStatusValue}));
+                                        short_msg => sprintf("Temperature '%s' is %s °C", $result->{ciscoEnvMonTemperatureStatusDescr}, $result->{ciscoEnvMonTemperatureStatusValue}));
         }
-        $self->{output}->perfdata_add(label => "temp_" . $result->{ciscoEnvMonTemperatureStatusDescr}, unit => 'C',
+        $self->{output}->perfdata_add(label => "temp_" . $result->{ciscoEnvMonTemperatureStatusDescr}, unit => '°C',
                                       value => $result->{ciscoEnvMonTemperatureStatusValue},
                                       warning => $warn,
                                       critical => $crit);
