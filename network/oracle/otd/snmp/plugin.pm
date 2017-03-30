@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-package network::radware::alteon::5224::plugin;
+package network::oracle::otd::snmp::plugin;
 
 use strict;
 use warnings;
@@ -31,9 +31,8 @@ sub new {
 
     $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'cpu'      => 'network::radware::alteon::common::mode::cpu',
-                         'hardware' => 'network::radware::alteon::common::mode::hardware',
-                         'memory'   => 'network::radware::alteon::common::mode::memory',
+                         'list-vservers'    => 'network::oracle::otd::snmp::mode::listvservers',
+                         'vserver-usage'    => 'network::oracle::otd::snmp::mode::vserverusage',
                          );
 
     return $self;
@@ -45,6 +44,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Alteon 5224 in SNMP.
+Check Oracle Traffic Director in SNMP.
 
 =cut

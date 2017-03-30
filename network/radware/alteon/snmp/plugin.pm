@@ -1,4 +1,6 @@
 #
+# Copyright 2017 Centreon (http://www.centreon.com/)
+#
 # Centreon is a full-fledged industry-strength solution that meets
 # the needs in IT infrastructure and application monitoring for
 # service performance.
@@ -16,7 +18,7 @@
 # limitations under the License.
 #
 
-package hardware::ups::apc::snmp::plugin;
+package network::radware::alteon::snmp::plugin;
 
 use strict;
 use warnings;
@@ -26,12 +28,12 @@ sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
-    
-    $self->{version} = '0.1';
+
+    $self->{version} = '1.0';
     %{$self->{modes}} = (
-                         'battery-status'   => 'hardware::ups::apc::snmp::mode::batterystatus',
-                         'output-lines'     => 'hardware::ups::apc::snmp::mode::outputlines',
-                         'sensors'          => 'hardware::ups::apc::snmp::mode::sensors',
+                         'cpu'      => 'network::radware::alteon::snmp::mode::cpu',
+                         'hardware' => 'network::radware::alteon::snmp::mode::hardware',
+                         'memory'   => 'network::radware::alteon::snmp::mode::memory',
                          );
 
     return $self;
@@ -43,6 +45,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check UPS APC through SNMP (POWERNET-MIB)
+Check Radware Alteon in SNMP.
 
 =cut
