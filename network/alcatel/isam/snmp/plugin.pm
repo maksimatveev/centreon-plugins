@@ -31,6 +31,7 @@ sub new {
 
     $self->{version} = '1.0';
     %{$self->{modes}} = (
+        'hardware'      => 'network::alcatel::isam::snmp::mode::hardware',
         'vlan-traffic'  => 'network::alcatel::isam::snmp::mode::vlantraffic',
     );
 
