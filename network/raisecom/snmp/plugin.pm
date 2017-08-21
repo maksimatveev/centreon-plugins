@@ -28,15 +28,15 @@ sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
-    # $options->{options} = options object
 
-    $self->{version} = '0.3';
+    $self->{version} = '0.1';
     %{$self->{modes}} = (
-                         'cpu'              => 'network::raisecom::snmp::mode::cpu',
-                         'memory'           => 'network::raisecom::snmp::mode::memory',
-                         'interfaces'       => 'snmp_standard::mode::interfaces',
-                         'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
-                         );
+        'cpu'              => 'network::raisecom::snmp::mode::cpu',
+        'hardware'         => 'network::raisecom::snmp::mode::hardware',
+        'interfaces'       => 'snmp_standard::mode::interfaces',
+        'list-interfaces'  => 'snmp_standard::mode::listinterfaces',
+        'memory'           => 'network::raisecom::snmp::mode::memory',
+    );
 
     return $self;
 }
@@ -47,6 +47,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Raisecom equipments in SNMP.
+Check Raisecom devices through SNMP
 
 =cut

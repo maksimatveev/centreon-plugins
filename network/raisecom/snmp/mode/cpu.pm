@@ -20,107 +20,108 @@
 
 package network::raisecom::snmp::mode::cpu;
 
-use base qw(centreon::plugins::mode);
+use base qw(centreon::plugins::templates::counter);
 
 use strict;
 use warnings;
+
+sub set_counters {
+    my ($self, %options) = @_;
+    
+    $self->{maps_counters_type} = [
+        { name => 'cpu', type => 0, cb_prefix_output => 'prefix_cpu_output' }
+    ];
+
+    $self->{maps_counters}->{cpu} = [
+       { label => '1s', set => {
+                key_values => [ { name => 'oneSec' } ],
+                output_template => '1 seconde : %.2f %%',
+                perfdatas => [
+                    { label => 'cpu_1s', value => 'oneSec_absolute', template => '%.2f',
+                      min => 0, max => 100, unit => '%' },
+                ],
+            }
+        },
+        { label => '5s', set => {
+                key_values => [ { name => 'fiveSec' } ],
+                output_template => '5 secondes : %.2f %%',
+                perfdatas => [
+                    { label => 'cpu_5s', value => 'fiveSec_absolute', template => '%.2f',
+                      min => 0, max => 100, unit => '%' },
+                ],
+            }
+        },
+        { label => '1m', set => {
+                key_values => [ { name => 'oneMin' } ],
+                output_template => '1 minute : %.2f %%',
+                perfdatas => [
+                    { label => 'cpu_1m', value => 'oneMin_absolute', template => '%.2f',
+                      min => 0, max => 100, unit => '%' },
+                ],
+            }
+        },
+        { label => '10m', set => {
+                key_values => [ { name => 'tenMin' } ],
+                output_template => '10 minutes : %.2f %%',
+                perfdatas => [
+                    { label => 'cpu_10m', value => 'tenMin_absolute', template => '%.2f',
+                      min => 0, max => 100, unit => '%' },
+                ],
+            }
+        },
+        { label => '2h', set => {
+                key_values => [ { name => 'twoHour' } ],
+                output_template => '2 hours : %.2f %%',
+                perfdatas => [
+                    { label => 'cpu_2h', value => 'twoHour_absolute', template => '%.2f',
+                      min => 0, max => 100, unit => '%' },
+                ],
+            }
+        },
+    ];
+}
+
+sub prefix_cpu_output {
+    my ($self, %options) = @_;
+    
+    return "CPU Usage ";
+}
 
 sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
     
-    $self->{version} = '1.1';
+    $self->{version} = '1.0';
     $options{options}->add_options(arguments =>
-                                {
-                                  "warning:s"               => { name => 'warning', default => '' },
-                                  "critical:s"              => { name => 'critical', default => '' },
+                                { 
                                 });
-
+    
     return $self;
 }
 
-sub check_options {
-    my ($self, %options) = @_;
-    $self->SUPER::init(%options);
-    
-    ($self->{warn1s}, $self->{warn1m}, $self->{warn10m}) = split /,/, $self->{option_results}->{warning};
-    ($self->{crit1s}, $self->{crit1m}, $self->{crit10m}) = split /,/, $self->{option_results}->{critical};
-    
-    if (($self->{perfdata}->threshold_validate(label => 'warn1s', value => $self->{warn1s})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong warning (1sec) threshold '" . $self->{warn1s} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'warn1m', value => $self->{warn1m})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong warning (1min) threshold '" . $self->{warn1m} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'warn10m', value => $self->{warn10m})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong warning (10min) threshold '" . $self->{warn10m} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'crit1s', value => $self->{crit1s})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong critical (1sec) threshold '" . $self->{crit1s} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'crit1m', value => $self->{crit1m})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong critical (1min) threshold '" . $self->{crit1m} . "'.");
-       $self->{output}->option_exit();
-    }
-    if (($self->{perfdata}->threshold_validate(label => 'crit10m', value => $self->{crit10m})) == 0) {
-       $self->{output}->add_option_msg(short_msg => "Wrong critical (10min) threshold '" . $self->{crit10m} . "'.");
-       $self->{output}->option_exit();
-    }
-}
+my %mapping_period = (1 => 'oneSec', 2 => 'fiveSec', 3 => 'oneMin', 4 => 'tenMin', 5 => 'twoHour');
 
-sub run {
-    my ($self, %options) = @_;
-    # $options{snmp} = snmp object
-    $self->{snmp} = $options{snmp};
+my $mapping = {
+    raisecomCPUUtilizationPeriod    => { oid => '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.2', map => \%mapping_period },
+    raisecomCPUUtilization          => { oid => '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3' },
+};
 
-    my $oid_raisecomCPUUtilization1sec = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3.1';
-    #CPU busy percentage in the last 1 second period.
-    my $oid_raisecomCPUUtilization1min = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3.3';
-    #CPU busy percentage in the last 1 minute period.
-    my $oid_raisecomCPUUtilization10min = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1.3.4';
-    #CPU busy percentage in the last 10 minute period.
-   
-    $self->{result} = $self->{snmp}->get_leef(oids => [ $oid_raisecomCPUUtilization1sec, $oid_raisecomCPUUtilization1min, $oid_raisecomCPUUtilization10min ],
-                                              nothing_quit => 1);
+my $oid_raisecomCPUUtilizationEntry = '.1.3.6.1.4.1.8886.1.1.1.5.1.1.1';
+
+sub manage_selection {
+    my ($self, %options) = @_;
     
-    my $cpu1sec = $self->{result}->{$oid_raisecomCPUUtilization1sec};
-    my $cpu1min = $self->{result}->{$oid_raisecomCPUUtilization1min};
-    my $cpu10min = $self->{result}->{$oid_raisecomCPUUtilization10min};
-    
-    my $exit1 = $self->{perfdata}->threshold_check(value => $cpu1sec, 
-                           threshold => [ { label => 'crit1s', exit_litteral => 'critical' }, { label => 'warn1s', exit_litteral => 'warning' } ]);
-    my $exit2 = $self->{perfdata}->threshold_check(value => $cpu1min, 
-                           threshold => [ { label => 'crit1m', exit_litteral => 'critical' }, { label => 'warn1m', exit_litteral => 'warning' } ]);
-    my $exit3 = $self->{perfdata}->threshold_check(value => $cpu10min, 
-                           threshold => [ { label => 'crit10m', exit_litteral => 'critical' }, { label => 'warn10m', exit_litteral => 'warning' } ]);
-    my $exit = $self->{output}->get_most_critical(status => [ $exit1, $exit2, $exit3 ]);
-    
-    $self->{output}->output_add(severity => $exit,
-                                short_msg => sprintf("CPU Usage: %.2f%% (1sec), %.2f%% (1min), %.2f%% (10min)",
-                                                    $cpu1sec, $cpu1min, $cpu10min));
-    
-    $self->{output}->perfdata_add(label => "cpu_1s", unit => '%',
-                                  value => $cpu1sec,
-                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn1s'),
-                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit1s'),
-                                  min => 0, max => 100);
-    $self->{output}->perfdata_add(label => "cpu_1m", unit => '%',
-                                  value => $cpu1min,
-                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn1m'),
-                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit1m'),
-                                  min => 0, max => 100);
-    $self->{output}->perfdata_add(label => "cpu_10m", unit => '%',
-                                  value => $cpu10min,
-                                  warning => $self->{perfdata}->get_perfdata_for_output(label => 'warn10m'),
-                                  critical => $self->{perfdata}->get_perfdata_for_output(label => 'crit10m'),
-                                  min => 0, max => 100);
-    $self->{output}->display();
-    $self->{output}->exit();
+    $self->{cpu} = {};
+    my $snmp_result = $options{snmp}->get_table(oid => $oid_raisecomCPUUtilizationEntry,
+                                                nothing_quit => 1);
+    foreach my $oid (keys %{$snmp_result}) {
+        next if ($oid !~ /^$mapping->{raisecomCPUUtilization}->{oid}\.(.*)$/);
+        my $instance = $1;
+        my $result = $options{snmp}->map_instance(mapping => $mapping, results => $snmp_result, instance => $instance);
+        
+        $self->{cpu}->{$result->{raisecomCPUUtilizationPeriod}} = $result->{raisecomCPUUtilization};
+    }
 }
 
 1;
@@ -129,17 +130,24 @@ __END__
 
 =head1 MODE
 
-Check CPU usage (RAISECOM-SYSTEM-MIB).
+Check CPU usage.
 
 =over 8
 
-=item B<--warning>
+=item B<--filter-counters>
 
-Threshold warning in percent (1sec,1min,10min).
+Only display some counters (regexp can be used).
+Example: --filter-counters='^(1s|1m)$'
 
-=item B<--critical>
+=item B<--warning-*>
 
-Threshold critical in percent (1sec,1min,10min).
+Threshold warning.
+Can be: '1s', '5s', '1m', '10m', '2h'.
+
+=item B<--critical-*>
+
+Threshold critical.
+Can be: '1s', '5s', '1m', '10m', '2h'.
 
 =back
 
